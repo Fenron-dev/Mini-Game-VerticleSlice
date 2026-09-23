@@ -1,0 +1,11 @@
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    prefer_single_quotes: true
+    avoid_print: true
+    unnecessary_lambdas: true
+
+analyzer:
+  errors:
+    todo: ignore

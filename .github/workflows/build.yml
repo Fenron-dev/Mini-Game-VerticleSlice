@@ -1,0 +1,108 @@
+# Alle Builds laufen hier – nie auf einem lokalen Rechner.
+#
+# - check:   Analyse + Tests bei jedem Push und Pull Request
+# - android: Release-APK als herunterladbares Artefakt
+# - ios:     unsigniertes iOS-Build (iPad) als Artefakt
+#
+# Die Plattformordner android/ und ios/ werden bewusst nicht eingecheckt,
+# sondern im Build-Job per `flutter create` erzeugt. Das hält das Repo klein
+# und frei von generiertem Code.
+
+name: Build
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: '3.32.0'
+
+jobs:
+  check:
+    name: Analyse und Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test --reporter expanded
+
+  android:
+    name: Android-APK
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Plattformordner erzeugen
+        run: |
+          flutter create . --platforms=android --org com.verticalslice --project-name vertical_slice
+          rm -f test/widget_test.dart
+
+      - run: flutter pub get
+      - run: flutter build apk --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vertical-slice-android
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 14
+
+  ios:
+    name: iOS (unsigniert)
+    needs: check
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Plattformordner erzeugen
+        run: |
+          flutter create . --platforms=ios --org com.verticalslice --project-name vertical_slice
+          rm -f test/widget_test.dart
+
+      - run: flutter pub get
+      - run: flutter build ios --release --no-codesign
+
+      - name: App verpacken
+        run: |
+          cd build/ios/iphoneos
+          zip -qr ../../../vertical-slice-ios.zip Runner.app
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vertical-slice-ios-unsigned
+          path: vertical-slice-ios.zip
+          retention-days: 14

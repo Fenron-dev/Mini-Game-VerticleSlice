@@ -1,0 +1,25 @@
+# Dart / Flutter
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+*.iml
+
+# Plattformordner entstehen in der CI (siehe .github/workflows/build.yml)
+android/
+ios/
+web/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+
+# Audio-Assets werden nicht eingecheckt (siehe assets/audio/README.md)
+assets/audio/*.ogg
+assets/audio/*.mp3
+assets/audio/*.wav
