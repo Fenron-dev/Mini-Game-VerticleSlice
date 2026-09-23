@@ -2,9 +2,11 @@
 #
 # - check:   Analyse + Tests bei jedem Push und Pull Request
 # - android: Release-APK als herunterladbares Artefakt
-# - ios:     unsigniertes iOS-Build (iPad) als Artefakt
 #
-# Die Plattformordner android/ und ios/ werden bewusst nicht eingecheckt,
+# iOS ist vorerst ausgesetzt: Es braucht einen macOS-Runner. Ein passendes
+# Podfile (Mindestziel iOS 14) liegt für später unter ci/ios/Podfile.
+#
+# Der Plattformordner android/ wird bewusst nicht eingecheckt,
 # sondern im Build-Job per `flutter create` erzeugt. Das hält das Repo klein
 # und frei von generiertem Code.
 
@@ -72,49 +74,4 @@ jobs:
         with:
           name: vertical-slice-android
           path: build/app/outputs/flutter-apk/app-release.apk
-          retention-days: 14
-
-  ios:
-    name: iOS (unsigniert)
-    needs: check
-    runs-on: macos-latest
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: stable
-          cache: true
-
-      - name: Plattformordner erzeugen
-        run: |
-          flutter create . --platforms=ios --org com.verticalslice --project-name vertical_slice
-          rm -f test/widget_test.dart
-
-      # audioplayers_darwin (über flame_audio) verlangt ein höheres
-      # Mindestziel als Flutters Vorgabe 12.0 – sonst bricht `pod install` ab.
-      # Eigenes Podfile aus dem Repo (ci/ios/Podfile) und dasselbe Ziel im
-      # Xcode-Projekt, damit Runner und Pods zusammenpassen.
-      - name: iOS-Mindestversion festlegen
-        run: |
-          TARGET=14.0
-          cp ci/ios/Podfile ios/Podfile
-          sed -i '' -E "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]+;/IPHONEOS_DEPLOYMENT_TARGET = $TARGET;/g" ios/Runner.xcodeproj/project.pbxproj
-          /usr/libexec/PlistBuddy -c "Set :MinimumOSVersion $TARGET" ios/Flutter/AppFrameworkInfo.plist || true
-          grep -c "IPHONEOS_DEPLOYMENT_TARGET = $TARGET" ios/Runner.xcodeproj/project.pbxproj
-
-      - run: flutter pub get
-      - run: flutter build ios --release --no-codesign
-
-      - name: App verpacken
-        run: |
-          cd build/ios/iphoneos
-          zip -qr ../../../vertical-slice-ios.zip Runner.app
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: vertical-slice-ios-unsigned
-          path: vertical-slice-ios.zip
           retention-days: 14

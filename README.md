@@ -20,19 +20,17 @@ aus:
 | --- | --- | --- |
 | Analyse und Tests | Ubuntu | `flutter analyze`, `flutter test` |
 | Android-APK | Ubuntu | Artefakt `vertical-slice-android` (Release-APK) |
-| iOS (unsigniert) | macOS | Artefakt `vertical-slice-ios-unsigned` |
 
 Die fertigen Dateien liegen im jeweiligen Lauf unter **Actions → Lauf →
 Artifacts** und werden nach 14 Tagen gelöscht. Einen Lauf von Hand startest du
 über **Actions → Build → Run workflow**.
 
-Die Ordner `android/` und `ios/` sind absichtlich nicht im Repo; die Pipeline
-erzeugt sie mit `flutter create`. Das hält das Repo klein und frei von
-generiertem Code.
+Der Ordner `android/` ist absichtlich nicht im Repo; die Pipeline erzeugt ihn
+mit `flutter create`. Das hält das Repo klein und frei von generiertem Code.
 
-Das iOS-Build ist unsigniert. Um es auf ein iPad zu bringen, braucht es später
-ein Apple-Developer-Zertifikat als GitHub-Secret – dann kann derselbe Job ein
-signiertes IPA erzeugen.
+**iOS ist vorerst ausgesetzt**, weil es einen macOS-Runner braucht. Für später
+liegt unter `ci/ios/Podfile` bereits ein Podfile mit dem nötigen Mindestziel
+iOS 14 (die Audio-Bibliothek verlangt mehr als Flutters Vorgabe 12.0).
 
 ---
 
@@ -211,6 +209,6 @@ Regressionstest.
 
 - Pixel-Art-Sprites anstelle der Farbflächen (nur `palette.dart` und die
   `render`-Methoden)
-- Signiertes iOS-Build über ein Zertifikat als Secret
+- iOS-Build wieder aufnehmen (macOS-Runner, später signiert per Secret)
 - mehr Angebote im Katalog – Balkon, Fahrradkeller, Post im Flur
 - ein Debug-Overlay für die `ScoreBreakdown`
