@@ -95,15 +95,15 @@ jobs:
 
       # audioplayers_darwin (über flame_audio) verlangt ein höheres
       # Mindestziel als Flutters Vorgabe 12.0 – sonst bricht `pod install` ab.
-      # Podfile aus Flutters Vorlage anlegen und Ziel überall gleich setzen.
+      # Eigenes Podfile aus dem Repo (ci/ios/Podfile) und dasselbe Ziel im
+      # Xcode-Projekt, damit Runner und Pods zusammenpassen.
       - name: iOS-Mindestversion festlegen
         run: |
           TARGET=14.0
-          cp "$FLUTTER_ROOT/packages/flutter_tools/templates/cocoapods/Podfile-ios" ios/Podfile
-          sed -i '' -E "s/^#? *platform :ios, '[0-9.]+'/platform :ios, '$TARGET'/" ios/Podfile
+          cp ci/ios/Podfile ios/Podfile
           sed -i '' -E "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]+;/IPHONEOS_DEPLOYMENT_TARGET = $TARGET;/g" ios/Runner.xcodeproj/project.pbxproj
           /usr/libexec/PlistBuddy -c "Set :MinimumOSVersion $TARGET" ios/Flutter/AppFrameworkInfo.plist || true
-          grep -n "platform :ios" ios/Podfile
+          grep -c "IPHONEOS_DEPLOYMENT_TARGET = $TARGET" ios/Runner.xcodeproj/project.pbxproj
 
       - run: flutter pub get
       - run: flutter build ios --release --no-codesign
